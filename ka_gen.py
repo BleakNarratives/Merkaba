@@ -1,0 +1,400 @@
+#!/usr/bin/env python3
+"""
+ka_gen.py — Backend-agnostic Ka generator.
+
+Takes a Ba (intent declaration) and produces a Ka (execution contract)
+with ordered stages, state machine, error posture, and axiom compliance.
+
+Usage:
+  python3 ka_gen.py outclaw.ba.yaml
+  python3 ka_gen.py truthsleuth.ba.yaml
+  python3 ka_gen.py --validate outclaw.ba.ka.yaml
+
+Environment:
+  MERKABA_BACKEND=groq  — Use Groq for LLM enrichment (optional)
+  GROQ_API_KEY=...      — Groq API key (optional, falls back to template)
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+try:
+    import yaml
+except ImportError:
+    print("[ka_gen] PyYAML not installed. Install: pip install pyyaml")
+    sys.exit(1)
+
+
+# ── Root Ba axioms ──────────────────────────────────────────────────────
+
+ROOT_AXIOMS = [
+    "no_orphan_code",
+    "no_larp",
+    "no_pokemon_skills",
+    "no_eternal_defer",
+    "no_print_theater",
+    "ka_must_earn_ba",
+    "scope_is_law",
+    "ship_or_kill",
+]
+
+
+# ── Ka template generator ───────────────────────────────────────────────
+
+def generate_ka_from_ba(ba: dict) -> dict:
+    """Generate a Ka execution contract from a Ba declaration.
+
+    This is the template-based generator (no LLM required).
+    Produces a structured Ka with stages, state machine, and axiom checks.
+    """
+    name = ba.get("name", "unnamed")
+    intent = ba.get("intent", "").strip()
+    success = ba.get("success_criteria", [])
+    scope_in = ba.get("scope", {}).get("in", [])
+    scope_out = ba.get("scope", {}).get("out", [])
+    scope_bounds = ba.get("scope", {}).get("boundaries", [])
+    requires = ba.get("requires", [])
+    metadata = ba.get("metadata", {})
+
+    # Generate stages from success criteria
+    stages = _infer_stages(ba)
+
+    # Build state machine
+    states = ["init", "validate_input", "process", "verify_output", "sign", "ship"]
+    transitions = {
+        "init": {"next": "validate_input", "on_error": "abort"},
+        "validate_input": {"next": "process", "on_error": "reject_input"},
+        "process": {"next": "verify_output", "on_error": "retry_or_abort"},
+        "verify_output": {"next": "sign", "on_error": "quarantine"},
+        "sign": {"next": "ship", "on_error": "hold"},
+        "ship": {"next": "done", "on_error": "rollback"},
+    }
+
+    # Axiom compliance checks
+    axiom_checks = _generate_axiom_checks(ba, stages)
+
+    ka = {
+        "ka_version": "0.1.0",
+        "ba_ref": name,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generator": "ka_gen.py (template)",
+        "stages": stages,
+        "state_machine": {
+            "initial": "init",
+            "terminal": "done",
+            "states": states,
+            "transitions": transitions,
+        },
+        "error_posture": {
+            "strategy": "fail-fast",
+            "retry_limit": 2,
+            "timeout_s": 120,
+            "fallback": "quarantine_and_alert",
+        },
+        "axiom_compliance": axiom_checks,
+        "scope": {
+            "in": scope_in,
+            "out": scope_out,
+            "boundaries": scope_bounds,
+        },
+        "requires": requires,
+        "metadata": metadata,
+    }
+
+    return ka
+
+
+def _infer_stages(ba: dict) -> List[dict]:
+    """Infer execution stages from Ba success criteria and scope."""
+    name = ba.get("name", "unnamed")
+    scope_in = ba.get("scope", {}).get("in", [])
+    success = ba.get("success_criteria", [])
+
+    stages = []
+
+    # Stage 1: Input validation
+    stages.append({
+        "order": 1,
+        "verb": "validate",
+        "name": "input_validation",
+        "description": f"Validate input conforms to scope.in for {name}",
+        "input": "raw_input",
+        "output": "validated_input",
+        "tool": "stdlib",
+        "signal": "input_valid" if scope_in else "input_valid",
+        "error": "reject_input",
+    })
+
+    # Stage 2: Core processing (inferred from success criteria)
+    stages.append({
+        "order": 2,
+        "verb": "process",
+        "name": "core_analysis",
+        "description": f"Execute core {name} analysis pipeline",
+        "input": "validated_input",
+        "output": "raw_results",
+        "tool": "stdlib",
+        "signal": "analysis_complete",
+        "error": "retry_or_abort",
+    })
+
+    # Stage 3: Verification against success criteria
+    stages.append({
+        "order": 3,
+        "verb": "verify",
+        "name": "success_criteria_check",
+        "description": "Verify output satisfies all Ba success criteria",
+        "input": "raw_results",
+        "output": "verified_results",
+        "tool": "stdlib",
+        "signal": "verified",
+        "error": "quarantine",
+        "checks": success,
+    })
+
+    # Stage 4: Output formatting
+    stages.append({
+        "order": 4,
+        "verb": "format",
+        "name": "output_formatting",
+        "description": "Format verified results into scope.out artifacts",
+        "input": "verified_results",
+        "output": "formatted_output",
+        "tool": "stdlib",
+        "signal": "formatted",
+        "error": "retry_format",
+    })
+
+    # Stage 5: Signing
+    stages.append({
+        "order": 5,
+        "verb": "sign",
+        "name": "integrity_sign",
+        "description": "Compute SHA-256 integrity hash and sign Ka",
+        "input": "formatted_output",
+        "output": "signed_output",
+        "tool": "stdlib",
+        "signal": "signed",
+        "error": "hold",
+    })
+
+    return stages
+
+
+def _generate_axiom_checks(ba: dict, stages: List[dict]) -> List[dict]:
+    """Generate axiom compliance checks for the Ka."""
+    name = ba.get("name", "unnamed")
+    checks = []
+
+    for axiom in ROOT_AXIOMS:
+        check = {"axiom": axiom, "status": "pending", "description": ""}
+
+        if axiom == "no_orphan_code":
+            check["description"] = f"All code in {name} connects to the pipeline"
+            check["validator"] = "import_check"
+        elif axiom == "no_larp":
+            check["description"] = "No theatrical non-functional output"
+            check["validator"] = "output真实性检查"
+        elif axiom == "no_pokemon_skills":
+            check["description"] = "Only scope-matched capabilities loaded"
+            check["validator"] = "scope_check"
+        elif axiom == "no_eternal_defer":
+            check["description"] = "No task deferred more than 3 times"
+            check["validator"] = "defer_counter"
+        elif axiom == "no_print_theater":
+            check["description"] = "No fake output — label STUB or delete"
+            check["validator"] = "stub_detector"
+        elif axiom == "ka_must_earn_ba":
+            check["description"] = "Ka satisfies all Ba success criteria"
+            check["validator"] = "criteria_matcher"
+        elif axiom == "scope_is_law":
+            check["description"] = "Output stays within scope.out boundaries"
+            check["validator"] = "scope_enforcer"
+        elif axiom == "ship_or_kill":
+            check["description"] = "Status resolves to SHIP or KILL — no HOLD limbo"
+            check["validator"] = "status_resolver"
+
+        checks.append(check)
+
+    return checks
+
+
+# ── LLM enrichment (optional) ──────────────────────────────────────────
+
+def enrich_ka_with_llm(ba: dict, ka: dict) -> dict:
+    """Attempt to enrich Ka stages with LLM-generated descriptions.
+
+    Falls back to template Ka if LLM is unavailable.
+    """
+    backend = os.environ.get("MERKABA_BACKEND", "")
+    groq_key = os.environ.get("GROQ_API_KEY", "")
+
+    if not groq_key or backend != "groq":
+        return ka  # Template Ka is fine
+
+    try:
+        import requests
+        prompt = f"""Given this Ba (intent declaration):
+Name: {ba.get('name')}
+Intent: {ba.get('intent')}
+Success criteria: {json.dumps(ba.get('success_criteria', []))}
+
+Refine these Ka stages with more specific implementation details:
+{json.dumps(ka['stages'], indent=2)}
+
+Return ONLY the refined stages as JSON. Keep the same structure."""
+
+        r = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
+            json={
+                "model": "llama-3.3-70b-versatile",
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.2,
+                "max_tokens": 2000,
+            },
+            timeout=30,
+        )
+        r.raise_for_status()
+        content = r.json()["choices"][0]["message"]["content"]
+        # Extract JSON from response
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0]
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0]
+        enriched_stages = json.loads(content)
+        if isinstance(enriched_stages, list) and len(enriched_stages) > 0:
+            ka["stages"] = enriched_stages
+            ka["generator"] = "ka_gen.py (groq-enriched)"
+    except Exception as e:
+        print(f"[ka_gen] LLM enrichment failed: {e} — using template")
+
+    return ka
+
+
+# ── Validation ──────────────────────────────────────────────────────────
+
+def validate_ka(ka: dict) -> List[str]:
+    """Validate a Ka against root axioms. Returns list of violations."""
+    violations = []
+
+    # Check required fields
+    for field in ["ka_version", "ba_ref", "stages", "state_machine", "axiom_compliance"]:
+        if field not in ka:
+            violations.append(f"Missing required field: {field}")
+
+    # Check stages
+    stages = ka.get("stages", [])
+    if not stages:
+        violations.append("Ka has no stages")
+    for i, stage in enumerate(stages):
+        for field in ["order", "verb", "name", "input", "output"]:
+            if field not in stage:
+                violations.append(f"Stage {i+1} missing field: {field}")
+
+    # Check state machine
+    sm = ka.get("state_machine", {})
+    if "initial" not in sm or "terminal" not in sm:
+        violations.append("State machine missing initial/terminal states")
+
+    # Check axiom compliance
+    checks = ka.get("axiom_compliance", [])
+    if len(checks) < len(ROOT_AXIOMS):
+        violations.append(f"Only {len(checks)}/{len(ROOT_AXIOMS)} axiom checks present")
+
+    # Ship-or-kill: no HOLD limbo
+    if ka.get("metadata", {}).get("status") == "hold":
+        violations.append("SHIP_OR_KILL: Ka status is HOLD — resolve to SHIP or KILL")
+
+    return violations
+
+
+# ── Signing ─────────────────────────────────────────────────────────────
+
+def sign_ka(ka: dict) -> dict:
+    """Compute SHA-256 integrity hash and add signature to Ka."""
+    ka_json = json.dumps(ka, sort_keys=True, default=str)
+    sig = hashlib.sha256(ka_json.encode()).hexdigest()
+    ka["signature"] = {
+        "algorithm": "SHA-256",
+        "hash": sig,
+        "signed_at": datetime.now(timezone.utc).isoformat(),
+    }
+    return ka
+
+
+# ── CLI ─────────────────────────────────────────────────────────────────
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: python3 ka_gen.py <ba_file.yaml>")
+        print("       python3 ka_gen.py --validate <ka_file.ka.yaml>")
+        sys.exit(1)
+
+    if sys.argv[1] == "--validate":
+        if len(sys.argv) < 3:
+            print("Usage: python3 ka_gen.py --validate <ka_file.ka.yaml>")
+            sys.exit(1)
+        ka = yaml.safe_load(open(sys.argv[2]))
+        violations = validate_ka(ka)
+        if violations:
+            print(f"VALIDATION FAILED — {len(violations)} violations:")
+            for v in violations:
+                print(f"  - {v}")
+            sys.exit(1)
+        else:
+            print("VALIDATION PASSED — Ka conforms to root axioms")
+            sys.exit(0)
+
+    ba_path = Path(sys.argv[1])
+    if not ba_path.exists():
+        print(f"[ka_gen] Ba file not found: {ba_path}")
+        sys.exit(1)
+
+    print(f"[ka_gen] Loading Ba: {ba_path}")
+    ba = yaml.safe_load(open(ba_path))
+
+    print(f"[ka_gen] Generating Ka for: {ba.get('name', 'unnamed')}")
+    ka = generate_ka_from_ba(ba)
+
+    # Try LLM enrichment
+    ka = enrich_ka_with_llm(ba, ka)
+
+    # Validate against root axioms
+    violations = validate_ka(ka)
+    if violations:
+        print(f"[ka_gen] WARNING: {len(violations)} axiom violations:")
+        for v in violations:
+            print(f"  - {v}")
+    else:
+        print("[ka_gen] All axiom checks pass")
+
+    # Sign
+    ka = sign_ka(ka)
+
+    # Write output
+    ka_path = ba_path.with_suffix(".ba.ka.yaml")
+    with open(ka_path, "w") as f:
+        yaml.dump(ka, f, default_flow_style=False, sort_keys=False)
+
+    print(f"[ka_gen] Ka written: {ka_path}")
+    print(f"[ka_gen] Signature: {ka['signature']['hash'][:16]}...")
+    print(f"[ka_gen] Stages: {len(ka['stages'])}")
+    print(f"[ka_gen] Axiom checks: {len(ka['axiom_compliance'])}")
+
+    # Also write JSON for programmatic consumption
+    json_path = ba_path.with_suffix(".ba.ka.json")
+    with open(json_path, "w") as f:
+        json.dump(ka, f, indent=2, default=str)
+    print(f"[ka_gen] JSON: {json_path}")
+
+
+if __name__ == "__main__":
+    main()

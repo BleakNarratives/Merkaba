@@ -1,0 +1,52 @@
+# OutClaw Ba — Intent Declaration
+# Capability: Legal Document Verification & Citation Fraud Detection
+# Carrier: Merkaba v0.1
+# Author: Mike (BleakNarratives)
+# Created: 2026-08-22
+
+name: outclaw-accountability-engine
+version: "1.0.0"
+intent: |
+  Audit legal documents for citation fraud, procedural inconsistencies,
+  and factual errors. Produce evidence-based review packets with
+  provenance tracking. NOT a lawyer — a factual verification tool.
+
+success_criteria:
+  - All uploaded documents parse without error
+  - Citation claims are cross-referenced against known case law
+  - Procedural timeline inconsistencies are flagged
+  - PII is redacted in all output artifacts
+  - Review packets include JSON audit sidecars
+  - Compile manifest is written last (publication marker)
+  - Non-zero exit status on validation failure (no partial batches)
+
+scope:
+  in:
+    - UTF-8 .txt and .md case materials
+    - PDF documents (via extraction layer)
+    - Docket notation (e.g. "21-CV-12345")
+    - FOIA responses
+    - Court filings and judicial complaints
+  out:
+    - Evidence-consistency review packets
+    - JSON audit sidecars with provenance
+    - Compile manifests (compile_manifest.json)
+    - Redacted summaries for downstream composition
+    - Bus findings published to Syntax event bus
+  boundaries:
+    - Does NOT file pleadings
+    - Does NOT provide legal advice
+    - Does NOT store unredacted PII beyond processing scope
+    - Does NOT execute code from uploaded documents
+
+requires:
+  - python3 >= 3.10
+  - requests (for LLM fallback)
+  - Standard library only for core pipeline (no mandatory external deps)
+
+metadata:
+  origin: Crostini-Chromebook
+  pillar: outclaw-flagship
+  devices: [chromebook, moto, a9]
+  inference: groq-free-tier
+  status: ship

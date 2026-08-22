@@ -1,0 +1,59 @@
+# TruthSleuth Ba — Intent Declaration
+# Capability: Rhetoric Analysis & Deception Detection
+# Carrier: Merkaba v0.1
+# Author: Mike (BleakNarratives)
+# Created: 2026-08-22
+
+name: truthsleuth-rhetoric-analyzer
+version: "0.1.0"
+intent: |
+  Analyze text for rhetorical manipulation, deception patterns,
+  and logical fallacies. Produce structured assessments with
+  confidence scores and evidence citations. Neutral, factual,
+  never adversarial.
+
+success_criteria:
+  - Input text is analyzed for 12+ deception patterns
+  - Each finding includes pattern type, confidence score, and excerpt
+  - Logical fallacies are identified with formal names
+  - Emotional manipulation tactics are flagged
+  - Output includes a deception_risk_score (0.0-1.0)
+  - Results are structured JSON for downstream consumption
+  - Processing is stateless (no session memory between analyses)
+
+scope:
+  in:
+    - Plain text input (any language)
+    - Legal filings and statements
+    - Political speeches and press releases
+    - Business proposals and pitches
+    - Social media posts and comments
+    - Contract language
+  out:
+    - Deception analysis report (JSON)
+    - Rhetorical device inventory
+    - Logical fallacy catalog with severity
+    - Confidence-scored findings list
+    - Overall deception_risk_score
+  boundaries:
+    - Does NOT make legal judgments
+    - Does NOT determine truth/falsehood (only patterns)
+    - Does NOT store analyzed text beyond processing
+    - Does NOT communicate with external services without explicit config
+
+requires:
+  - python3 >= 3.10
+  - groq API key (free tier) OR ollama local model
+  - Standard library for pattern matching (re, json)
+
+metadata:
+  origin: Crostini-Chromebook
+  pillar: rootbase-analysis
+  devices: [chromebook, moto, a9]
+  inference: groq-free-tier
+  status: hold
+  notes: |
+    Second candidate for Ba/Ka treatment per MERKABA_HANDOFF.md.
+    Build after OutClaw is proven. Core pattern library can be
+    implemented without LLM (regex + heuristic), with LLM as
+    enrichment layer for nuanced cases.

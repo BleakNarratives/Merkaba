@@ -1,0 +1,11 @@
+# Root Ba Axioms
+axioms:
+  - no_orphan_code
+  - no_larp
+  - no_pokemon_skills
+  - no_eternal_defer
+  - no_print_theater
+  - ka_must_earn_ba
+  - scope_is_law
+  - ship_or_kill
+validator: "~/.merkaba/validator.py"
