@@ -379,8 +379,19 @@ def main():
     # Sign
     ka = sign_ka(ka)
 
+    # Determine base name for output files (strip .ba.yaml or .yaml)
+    base_name = ba_path.name
+    if base_name.endswith(".ba.yaml"):
+        base_name = base_name[:-8]
+    elif base_name.endswith(".yaml"):
+        base_name = base_name[:-5]
+    elif base_name.endswith(".yml"):
+        base_name = base_name[:-4]
+
+    ka_path = ba_path.parent / f"{base_name}.ka.yaml"
+    json_path = ba_path.parent / f"{base_name}.ka.json"
+
     # Write output
-    ka_path = ba_path.with_suffix(".ba.ka.yaml")
     with open(ka_path, "w") as f:
         yaml.dump(ka, f, default_flow_style=False, sort_keys=False)
 
@@ -390,7 +401,6 @@ def main():
     print(f"[ka_gen] Axiom checks: {len(ka['axiom_compliance'])}")
 
     # Also write JSON for programmatic consumption
-    json_path = ba_path.with_suffix(".ba.ka.json")
     with open(json_path, "w") as f:
         json.dump(ka, f, indent=2, default=str)
     print(f"[ka_gen] JSON: {json_path}")

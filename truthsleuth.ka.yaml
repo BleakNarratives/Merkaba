@@ -1,6 +1,6 @@
 ka_version: 0.1.0
 ba_ref: truthsleuth-rhetoric-analyzer
-generated_at: '2026-08-22T22:40:56.109557+00:00'
+generated_at: '2026-08-27T06:14:27.513173+00:00'
 generator: ka_gen.py (template)
 stages:
 - order: 1
@@ -154,7 +154,7 @@ metadata:
   - moto
   - a9
   inference: groq-free-tier
-  status: hold
+  status: ship
   notes: 'Second candidate for Ba/Ka treatment per MERKABA_HANDOFF.md.
 
     Build after OutClaw is proven. Core pattern library can be
@@ -166,5 +166,5 @@ metadata:
     '
 signature:
   algorithm: SHA-256
-  hash: 91153673877e49646c3adcef2b3dbebad333ebd71e998c41b6636a89a5db5006
-  signed_at: '2026-08-22T22:40:56.110156+00:00'
+  hash: 5147dcb125c9aa1f46e67feea81b3293a19d2ceca5af72fb5523ca19aaef5904
+  signed_at: '2026-08-27T06:14:27.513475+00:00'
