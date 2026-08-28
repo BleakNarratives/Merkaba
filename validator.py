@@ -122,11 +122,17 @@ def validate(target_path: Path) -> bool:
                     break
 
             if trusted_signed_file:
-                with open(trusted_signed_file, "r", encoding="utf-8") as sf:
-                    trusted_data = yaml.safe_load(sf)
-                trusted_sig = trusted_data.get("signature", {}).get("hash") if isinstance(trusted_data, dict) else None
-                if trusted_sig != digest:
-                    violations.append(f"INTEGRITY: Ka content hash does not match trusted signed hash in {trusted_signed_file.name}")
+                try:
+                    with open(trusted_signed_file, "r", encoding="utf-8") as sf:
+                        trusted_data = yaml.safe_load(sf)
+                except (OSError, yaml.YAMLError) as e:
+                    violations.append(f"INTEGRITY: could not read trusted signed file {trusted_signed_file.name}: {e}")
+                    trusted_data = None
+
+                if isinstance(trusted_data, dict):
+                    trusted_sig = trusted_data.get("signature", {}).get("hash")
+                    if trusted_sig != digest:
+                        violations.append(f"INTEGRITY: Ka content hash does not match trusted signed hash in {trusted_signed_file.name}")
         except ImportError:
             # Fallback basic Ka validation
             metadata = data.get("metadata", {})
