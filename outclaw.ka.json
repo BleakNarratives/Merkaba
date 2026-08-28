@@ -1,7 +1,7 @@
 {
   "ka_version": "0.1.0",
   "ba_ref": "outclaw-accountability-engine",
-  "generated_at": "2026-08-22T22:40:37.952515+00:00",
+  "generated_at": "2026-08-27T06:14:27.165075+00:00",
   "generator": "ka_gen.py (template)",
   "stages": [
     {
@@ -203,7 +203,7 @@
   },
   "signature": {
     "algorithm": "SHA-256",
-    "hash": "69b2cf57fa73a8ce1cdcc46f64809b4bff0c5b351bbf5c4226fb841cb74ea9c2",
-    "signed_at": "2026-08-22T22:40:37.952889+00:00"
+    "hash": "72503f1c55ffe04c6482274955a7babfe8cabc22837a78fca24b9a0be511648d",
+    "signed_at": "2026-08-27T06:14:27.165279+00:00"
   }
 }

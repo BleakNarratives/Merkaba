@@ -51,7 +51,7 @@ metadata:
   pillar: rootbase-analysis
   devices: [chromebook, moto, a9]
   inference: groq-free-tier
-  status: hold
+  status: ship
   notes: |
     Second candidate for Ba/Ka treatment per MERKABA_HANDOFF.md.
     Build after OutClaw is proven. Core pattern library can be
