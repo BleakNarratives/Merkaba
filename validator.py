@@ -49,11 +49,19 @@ def validate_ba(data: dict, file_path: Path) -> list[str]:
     # Metadata & ship_or_kill axiom check
     metadata = data.get("metadata", {})
     if isinstance(metadata, dict):
-        status = metadata.get("status", "").lower()
+        status = str(metadata.get("status", "")).lower()
         if not status:
             violations.append("Ba metadata missing 'status'")
         elif status not in ["ship", "kill"]:
             violations.append(f"SHIP_OR_KILL: Ba status is '{status}' — must resolve to 'ship' or 'kill'")
+
+        # no_eternal_defer check
+        try:
+            defer_count = int(metadata.get("defer_count", 0))
+        except (TypeError, ValueError):
+            defer_count = 0
+        if defer_count > 3:
+            violations.append("NO_ETERNAL_DEFER violation: task deferred more than 3 times")
     else:
         violations.append("Ba metadata must be a dictionary")
 
@@ -96,8 +104,12 @@ def validate(target_path: Path) -> bool:
             violations = validate_ka(data)
         except ImportError:
             # Fallback basic Ka validation
-            if data.get("metadata", {}).get("status") == "hold":
-                violations.append("SHIP_OR_KILL: Ka status is HOLD — resolve to SHIP or KILL")
+            metadata = data.get("metadata", {})
+            if isinstance(metadata, dict):
+                if metadata.get("status") == "hold":
+                    violations.append("SHIP_OR_KILL: Ka status is HOLD — resolve to SHIP or KILL")
+            else:
+                violations.append("Ka metadata must be a dictionary")
     else:
         violations = validate_ba(data, target_path)
 
