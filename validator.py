@@ -15,16 +15,16 @@ except ImportError:
 
 
 def find_root_ba() -> Path:
-    """Find root.ba.yaml in ~/.merkaba or local repo directory."""
-    home_root = Path.home() / ".merkaba" / "root.ba.yaml"
-    if home_root.exists():
-        return home_root
-
+    """Find root.ba.yaml in local repo directory or ~/.merkaba."""
     local_root = Path(__file__).parent / "root.ba.yaml"
     if local_root.exists():
         return local_root
 
-    raise FileNotFoundError("root.ba.yaml not found in ~/.merkaba/ or local directory")
+    home_root = Path.home() / ".merkaba" / "root.ba.yaml"
+    if home_root.exists():
+        return home_root
+
+    raise FileNotFoundError("root.ba.yaml not found in local directory or ~/.merkaba/")
 
 
 def validate_ba(data: dict, file_path: Path) -> list[str]:
@@ -102,6 +102,12 @@ def validate(target_path: Path) -> bool:
         try:
             from ka_gen import validate_ka
             violations = validate_ka(data)
+            sig = data.get("signature")
+            import json, hashlib
+            payload = {k: v for k, v in data.items() if k != "signature"}
+            digest = hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
+            if not sig or sig.get("hash") != digest:
+                violations.append("INTEGRITY: signature hash does not match Ka content")
         except ImportError:
             # Fallback basic Ka validation
             metadata = data.get("metadata", {})
