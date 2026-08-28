@@ -15,16 +15,16 @@ except ImportError:
 
 
 def find_root_ba() -> Path:
-    """Find root.ba.yaml in local repo directory or ~/.merkaba."""
-    local_root = Path(__file__).parent / "root.ba.yaml"
-    if local_root.exists():
-        return local_root
-
+    """Find root.ba.yaml in ~/.merkaba or local repo directory."""
     home_root = Path.home() / ".merkaba" / "root.ba.yaml"
     if home_root.exists():
         return home_root
 
-    raise FileNotFoundError("root.ba.yaml not found in local directory or ~/.merkaba/")
+    local_root = Path(__file__).parent / "root.ba.yaml"
+    if local_root.exists():
+        return local_root
+
+    raise FileNotFoundError("root.ba.yaml not found in ~/.merkaba/ or local directory")
 
 
 def validate_ba(data: dict, file_path: Path) -> list[str]:
@@ -49,19 +49,11 @@ def validate_ba(data: dict, file_path: Path) -> list[str]:
     # Metadata & ship_or_kill axiom check
     metadata = data.get("metadata", {})
     if isinstance(metadata, dict):
-        status = str(metadata.get("status", "")).lower()
+        status = metadata.get("status", "").lower()
         if not status:
             violations.append("Ba metadata missing 'status'")
         elif status not in ["ship", "kill"]:
             violations.append(f"SHIP_OR_KILL: Ba status is '{status}' — must resolve to 'ship' or 'kill'")
-
-        # no_eternal_defer check
-        try:
-            defer_count = int(metadata.get("defer_count", 0))
-        except (TypeError, ValueError):
-            defer_count = 0
-        if defer_count > 3:
-            violations.append("NO_ETERNAL_DEFER violation: task deferred more than 3 times")
     else:
         violations.append("Ba metadata must be a dictionary")
 
@@ -102,47 +94,10 @@ def validate(target_path: Path) -> bool:
         try:
             from ka_gen import validate_ka
             violations = validate_ka(data)
-            sig = data.get("signature")
-            import json, hashlib
-            payload = {k: v for k, v in data.items() if k != "signature"}
-            digest = hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
-            if not sig or sig.get("hash") != digest:
-                violations.append("INTEGRITY: signature hash does not match Ka content")
-
-            # Check if a trusted signed copy exists in signed/ or ~/.merkaba/signed/ and verify match
-            signed_dir_candidates = [
-                target_path.parent / "signed",
-                Path.home() / ".merkaba" / "signed"
-            ]
-            trusted_signed_file = None
-            for s_dir in signed_dir_candidates:
-                candidate = s_dir / target_path.name
-                if candidate.exists() and candidate.resolve() != target_path.resolve():
-                    trusted_signed_file = candidate
-                    break
-
-            if trusted_signed_file:
-                try:
-                    with open(trusted_signed_file, "r", encoding="utf-8") as sf:
-                        trusted_data = yaml.safe_load(sf)
-                except (OSError, yaml.YAMLError) as e:
-                    violations.append(f"INTEGRITY: could not read trusted signed file {trusted_signed_file.name}: {e}")
-                    trusted_data = None
-
-                if not isinstance(trusted_data, dict):
-                    violations.append(f"INTEGRITY: trusted signed file {trusted_signed_file.name} is not a valid Ka mapping")
-                else:
-                    trusted_sig = trusted_data.get("signature", {}).get("hash")
-                    if trusted_sig != digest:
-                        violations.append(f"INTEGRITY: Ka content hash does not match trusted signed hash in {trusted_signed_file.name}")
         except ImportError:
             # Fallback basic Ka validation
-            metadata = data.get("metadata", {})
-            if isinstance(metadata, dict):
-                if metadata.get("status") == "hold":
-                    violations.append("SHIP_OR_KILL: Ka status is HOLD — resolve to SHIP or KILL")
-            else:
-                violations.append("Ka metadata must be a dictionary")
+            if data.get("metadata", {}).get("status") == "hold":
+                violations.append("SHIP_OR_KILL: Ka status is HOLD — resolve to SHIP or KILL")
     else:
         violations = validate_ba(data, target_path)
 

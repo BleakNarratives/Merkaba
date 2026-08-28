@@ -15,8 +15,4 @@ if [ -f "$SCRIPT_DIR/validator.py" ]; then
     cp "$SCRIPT_DIR/validator.py" "$MERKABA_DIR/validator.py"
 fi
 
-if [ -f "$SCRIPT_DIR/ka_gen.py" ]; then
-    cp "$SCRIPT_DIR/ka_gen.py" "$MERKABA_DIR/ka_gen.py"
-fi
-
 echo "Merkaba runtime ready at $MERKABA_DIR."

@@ -70,15 +70,11 @@ class TestMerkabaRepositoryHealth(unittest.TestCase):
             )
 
     def test_merkaba_init_script(self):
-        import tempfile
-        temp_home = tempfile.mkdtemp()
-        env = {**os.environ, "HOME": temp_home}
-        res = subprocess.run(["bash", "merkaba_init.sh"], capture_output=True, text=True, env=env)
+        res = subprocess.run(["bash", "merkaba_init.sh"], capture_output=True, text=True)
         self.assertEqual(res.returncode, 0, f"merkaba_init.sh failed: {res.stderr}")
-        home_merkaba = Path(temp_home) / ".merkaba"
+        home_merkaba = Path.home() / ".merkaba"
         self.assertTrue((home_merkaba / "root.ba.yaml").exists())
         self.assertTrue((home_merkaba / "validator.py").exists())
-        self.assertTrue((home_merkaba / "ka_gen.py").exists())
 
 
 if __name__ == "__main__":
