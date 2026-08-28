@@ -108,6 +108,25 @@ def validate(target_path: Path) -> bool:
             digest = hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()
             if not sig or sig.get("hash") != digest:
                 violations.append("INTEGRITY: signature hash does not match Ka content")
+
+            # Check if a trusted signed copy exists in signed/ or ~/.merkaba/signed/ and verify match
+            signed_dir_candidates = [
+                target_path.parent / "signed",
+                Path.home() / ".merkaba" / "signed"
+            ]
+            trusted_signed_file = None
+            for s_dir in signed_dir_candidates:
+                candidate = s_dir / target_path.name
+                if candidate.exists() and candidate.resolve() != target_path.resolve():
+                    trusted_signed_file = candidate
+                    break
+
+            if trusted_signed_file:
+                with open(trusted_signed_file, "r", encoding="utf-8") as sf:
+                    trusted_data = yaml.safe_load(sf)
+                trusted_sig = trusted_data.get("signature", {}).get("hash") if isinstance(trusted_data, dict) else None
+                if trusted_sig != digest:
+                    violations.append(f"INTEGRITY: Ka content hash does not match trusted signed hash in {trusted_signed_file.name}")
         except ImportError:
             # Fallback basic Ka validation
             metadata = data.get("metadata", {})
