@@ -129,7 +129,9 @@ def validate(target_path: Path) -> bool:
                     violations.append(f"INTEGRITY: could not read trusted signed file {trusted_signed_file.name}: {e}")
                     trusted_data = None
 
-                if isinstance(trusted_data, dict):
+                if not isinstance(trusted_data, dict):
+                    violations.append(f"INTEGRITY: trusted signed file {trusted_signed_file.name} is not a valid Ka mapping")
+                else:
                     trusted_sig = trusted_data.get("signature", {}).get("hash")
                     if trusted_sig != digest:
                         violations.append(f"INTEGRITY: Ka content hash does not match trusted signed hash in {trusted_signed_file.name}")
