@@ -1,7 +1,7 @@
 {
   "ka_version": "0.1.0",
   "ba_ref": "truthsleuth-rhetoric-analyzer",
-  "generated_at": "2026-08-22T22:40:56.109557+00:00",
+  "generated_at": "2026-08-27T06:45:46.140242+00:00",
   "generator": "ka_gen.py (template)",
   "stages": [
     {
@@ -124,7 +124,7 @@
       "axiom": "no_larp",
       "status": "pending",
       "description": "No theatrical non-functional output",
-      "validator": "output\u771f\u5b9e\u6027\u68c0\u67e5"
+      "validator": "output_authenticity_check"
     },
     {
       "axiom": "no_pokemon_skills",
@@ -188,7 +188,6 @@
   },
   "requires": [
     "python3 >= 3.10",
-    "groq API key (free tier) OR ollama local model",
     "Standard library for pattern matching (re, json)"
   ],
   "metadata": {
@@ -200,12 +199,12 @@
       "a9"
     ],
     "inference": "groq-free-tier",
-    "status": "hold",
-    "notes": "Second candidate for Ba/Ka treatment per MERKABA_HANDOFF.md.\nBuild after OutClaw is proven. Core pattern library can be\nimplemented without LLM (regex + heuristic), with LLM as\nenrichment layer for nuanced cases.\n"
+    "status": "ship",
+    "notes": "Core pattern library implemented without LLM (regex + heuristic),\nwith LLM as optional enrichment layer for nuanced cases. Promoted\nfrom hold to ship."
   },
   "signature": {
     "algorithm": "SHA-256",
-    "hash": "91153673877e49646c3adcef2b3dbebad333ebd71e998c41b6636a89a5db5006",
-    "signed_at": "2026-08-22T22:40:56.110156+00:00"
+    "hash": "b14aea94cddab4c4ca018ae1286e23e24d46769409c23fe492aa52bb23071340",
+    "signed_at": "2026-08-27T06:45:46.140434+00:00"
   }
 }

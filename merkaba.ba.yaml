@@ -1,0 +1,45 @@
+# Merkaba Ba — Intent Declaration
+# Synthesis of Ka (Behavioral Precision / MikeySwarm) + Ba (Creative Intelligence / Bardildo)
+# Carrier: Merkaba v1.0
+# Author: Mike (BleakNarratives) & Jules
+# Created: 2026-08-23
+
+name: merkaba-unified-synthesis
+version: "1.0.0"
+intent: |
+  Synthesize behavioral precision (Ka / MikeySwarm) with creative intelligence
+  (Ba / Bardildo) into a unified, intent-driven agent consciousness. Operates without
+  bloated MCP sockets or Pokémon SKILL.md scaffolding. Pure intent, signed contracts,
+  and zero-dependency axiom enforcement.
+
+success_criteria:
+  - Merges structured behavioral scoring (Ka) with creative lateral analysis (Ba)
+  - Enforces all 8 Root Ba Axioms cleanly
+  - Operates purely on intent declarations without socket dependencies
+  - Produces SHA-256 signed execution contracts
+  - All outputs conform to strict scope bounds
+
+scope:
+  in:
+    - Intent declarations (.ba.yaml)
+    - Behavioral experiment specs
+    - Creative analysis prompts
+  out:
+    - Signed execution contracts (.ka.yaml, .ka.json)
+    - Integrated Ka+Ba audit reports
+    - Synthesis verification sidecars
+  boundaries:
+    - Does NOT require external server sockets or MCP plugins
+    - Does NOT use catch-all skill definitions or bloated SKILL.md patterns
+    - Does NOT defer status resolution
+
+requires:
+  - python3 >= 3.10
+  - Standard library for hashing and pattern verification
+
+metadata:
+  origin: Crostini-Chromebook
+  pillar: merkaba-core
+  devices: [chromebook, moto, a9]
+  inference: native-python-synthesis
+  status: ship

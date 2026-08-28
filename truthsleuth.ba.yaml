@@ -43,7 +43,6 @@ scope:
 
 requires:
   - python3 >= 3.10
-  - groq API key (free tier) OR ollama local model
   - Standard library for pattern matching (re, json)
 
 metadata:
@@ -51,9 +50,8 @@ metadata:
   pillar: rootbase-analysis
   devices: [chromebook, moto, a9]
   inference: groq-free-tier
-  status: hold
+  status: ship
   notes: |
-    Second candidate for Ba/Ka treatment per MERKABA_HANDOFF.md.
-    Build after OutClaw is proven. Core pattern library can be
-    implemented without LLM (regex + heuristic), with LLM as
-    enrichment layer for nuanced cases.
+    Core pattern library implemented without LLM (regex + heuristic),
+    with LLM as optional enrichment layer for nuanced cases. Promoted
+    from hold to ship.
