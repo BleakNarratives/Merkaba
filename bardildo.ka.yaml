@@ -1,7 +1,7 @@
 {
   "ka_version": "0.1.0",
   "ba_ref": "bardildo-ecosystem-tour-guide",
-  "generated_at": "2026-08-28T09:13:39.540921+00:00",
+  "generated_at": "2026-08-29T01:11:07.367144+00:00",
   "generator": "ka_gen.py (template)",
   "stages": [
     {
@@ -38,6 +38,7 @@
       "error": "quarantine",
       "checks": [
         "Responds strictly when explicitly invoked by user intent or system command",
+        "Composes legitimate 14-line Shakespearean sonnets with ABAB CDCD EFEF GG rhyme schemes",
         "Provides clear, direct, irreverent navigation across ModMind components",
         "Maintains strict anti-clippy posture (zero background nagging/interruptions)",
         "All outputs conform to strict scope bounds and 8 Root Ba Axioms",
@@ -164,11 +165,11 @@
   "scope": {
     "in": [
       "Explicit tour queries and navigation commands",
-      "Creative enhancement and lateral synthesis requests",
+      "Creative enhancement, sonnet requests, and lateral synthesis prompts",
       "System component status queries"
     ],
     "out": [
-      "Ecosystem orientation reports",
+      "Ecosystem orientation reports and 14-line Shakespearean sonnets",
       "Lateral insight sidecars",
       "Navigation route guidance"
     ],
@@ -193,11 +194,11 @@
     ],
     "inference": "native-python-synthesis",
     "status": "ship",
-    "notes": "Anti-Clippy Law enforced at contract level: Bardildo is event-driven\nand intent-triggered only. High signal, zero fluff."
+    "notes": "Anti-Clippy Law enforced at contract level. Equipped with Shakespearean\nsonnet composition engine (14-line ABAB CDCD EFEF GG)."
   },
   "signature": {
     "algorithm": "SHA-256",
-    "hash": "0b41d606b20709a5038fc1bc13b888ad5fb13241090853629c52d002955b6971",
-    "signed_at": "2026-08-28T09:13:39.541365+00:00"
+    "hash": "7ad61aa3fae19909401e2bcf6509ecf43f420f83f7f5af7471d4bd4e3e650e91",
+    "signed_at": "2026-08-29T01:11:07.367369+00:00"
   }
 }
