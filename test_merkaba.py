@@ -8,7 +8,6 @@ from pathlib import Path
 import validator
 import ka_gen
 import ka_run
-import bardildo_sonnet
 
 class TestMerkaba(unittest.TestCase):
 
@@ -47,14 +46,6 @@ class TestMerkaba(unittest.TestCase):
             self.assertEqual(receipt.get("execution_status"), "COMPLETED", f"Execution failed for {kf}")
             self.assertIn("receipt_signature", receipt, f"Missing receipt signature for {kf}")
             self.assertEqual(len(receipt.get("execution_log", [])), 5, f"Expected 5 executed stages for {kf}")
-
-    def test_bardildo_sonnet_composition(self):
-        sonnet = bardildo_sonnet.compose_sonnet()
-        lines = sonnet.strip().split("\n")
-        self.assertEqual(len(lines), 14, f"Sonnet must have exactly 14 lines, got {len(lines)}")
-        receipt = ka_run.execute_ka(Path("bardildo.ka.yaml"))
-        self.assertIn("bardildo_sonnet", receipt, "Receipt missing bardildo_sonnet payload")
-        self.assertEqual(len(receipt["bardildo_sonnet"].strip().split("\n")), 14)
 
     def test_ship_status(self):
         ba_files = ["outclaw.ba.yaml", "truthsleuth.ba.yaml", "merkaba.ba.yaml", "bardildo.ba.yaml"]

@@ -6,7 +6,7 @@ Executes a signed Ka contract state machine through its stages:
   init -> validate_input -> process -> verify_output -> sign -> ship -> done
 
 Zero external dependencies. Enforces signature verification and axiom compliance
-prior to execution. Integrates Bardildo Sonnet composition.
+prior to execution.
 """
 
 from __future__ import annotations
@@ -20,7 +20,6 @@ from datetime import datetime, timezone
 
 import ka_gen
 import validator
-import bardildo_sonnet
 
 def execute_ka(ka_path: Path, input_payload: dict | None = None) -> dict:
     print(f"[ka_run] Loading Ka contract: {ka_path}")
@@ -37,8 +36,7 @@ def execute_ka(ka_path: Path, input_payload: dict | None = None) -> dict:
         print(f"[ka_run] ERROR: Contract has {len(violations)} axiom violations! Refusing to execute.")
         return {"status": "ABORTED", "reason": "axiom_violations", "details": violations}
 
-    ba_ref = ka.get("ba_ref", "")
-    print(f"[ka_run] Contract signature verified. Executing '{ba_ref}' state machine...")
+    print(f"[ka_run] Contract signature verified. Executing '{ka.get('ba_ref')}' state machine...")
 
     stages = ka.get("stages", [])
     state_machine = ka.get("state_machine", {})
@@ -62,16 +60,13 @@ def execute_ka(ka_path: Path, input_payload: dict | None = None) -> dict:
 
         print(f"[ka_run] Stage {order}: {verb} ({name}) ...")
 
+        # Simulate stage execution step
         input_data = context.get(input_key, {})
 
         if verb == "validate":
             result = {"validated": True, "input_summary": str(input_data)[:50]}
         elif verb == "process":
-            if "bardildo" in ba_ref.lower():
-                sonnet = bardildo_sonnet.compose_sonnet()
-                result = {"analysis_output": "stage_processing_complete", "sonnet": sonnet}
-            else:
-                result = {"analysis_output": "stage_processing_complete", "items_processed": 1}
+            result = {"analysis_output": "stage_processing_complete", "items_processed": 1}
         elif verb == "verify":
             result = {"criteria_satisfied": True, "checks_passed": len(stage.get("checks", []))}
         elif verb == "format":
@@ -92,13 +87,14 @@ def execute_ka(ka_path: Path, input_payload: dict | None = None) -> dict:
             "output_summary": str(result)[:80]
         })
 
+        # Advance state
         transitions = state_machine.get("transitions", {})
         if current_state in transitions:
             current_state = transitions[current_state].get("next", current_state)
 
     duration_ms = round((time.time() - start_time) * 1000, 2)
     receipt = {
-        "ba_ref": ba_ref,
+        "ba_ref": ka.get("ba_ref"),
         "ka_signature": ka.get("signature", {}).get("hash"),
         "execution_status": "COMPLETED",
         "final_state": terminal_state,
@@ -108,9 +104,7 @@ def execute_ka(ka_path: Path, input_payload: dict | None = None) -> dict:
         "output_context": context.get("signed_output") or context.get("formatted_output")
     }
 
-    if "bardildo" in ba_ref.lower() and "raw_results" in context:
-        receipt["bardildo_sonnet"] = context["raw_results"].get("sonnet")
-
+    # Generate execution receipt signature
     receipt_hash = hashlib.sha256(json.dumps(receipt, sort_keys=True, default=str).encode()).hexdigest()
     receipt["receipt_signature"] = receipt_hash
 
@@ -132,8 +126,6 @@ def main():
 
     receipt = execute_ka(ka_path, input_payload)
     if receipt.get("execution_status") == "COMPLETED":
-        if "bardildo_sonnet" in receipt:
-            print("\n" + receipt["bardildo_sonnet"] + "\n")
         sys.exit(0)
     else:
         sys.exit(1)
