@@ -1,14 +1,14 @@
 {
   "ka_version": "0.1.0",
-  "ba_ref": "outclaw-accountability-engine",
-  "generated_at": "2026-08-27T06:45:45.807315+00:00",
+  "ba_ref": "merkaba-unified-synthesis",
+  "generated_at": "2026-08-27T06:45:46.465135+00:00",
   "generator": "ka_gen.py (template)",
   "stages": [
     {
       "order": 1,
       "verb": "validate",
       "name": "input_validation",
-      "description": "Validate input conforms to scope.in for outclaw-accountability-engine",
+      "description": "Validate input conforms to scope.in for merkaba-unified-synthesis",
       "input": "raw_input",
       "output": "validated_input",
       "tool": "stdlib",
@@ -19,7 +19,7 @@
       "order": 2,
       "verb": "process",
       "name": "core_analysis",
-      "description": "Execute core outclaw-accountability-engine analysis pipeline",
+      "description": "Execute core merkaba-unified-synthesis analysis pipeline",
       "input": "validated_input",
       "output": "raw_results",
       "tool": "stdlib",
@@ -37,13 +37,11 @@
       "signal": "verified",
       "error": "quarantine",
       "checks": [
-        "All uploaded documents parse without error",
-        "Citation claims are cross-referenced against known case law",
-        "Procedural timeline inconsistencies are flagged",
-        "PII is redacted in all output artifacts",
-        "Review packets include JSON audit sidecars",
-        "Compile manifest is written last (publication marker)",
-        "Non-zero exit status on validation failure (no partial batches)"
+        "Merges structured behavioral scoring (Ka) with creative lateral analysis (Ba)",
+        "Enforces all 8 Root Ba Axioms cleanly",
+        "Operates purely on intent declarations without socket dependencies",
+        "Produces SHA-256 signed execution contracts",
+        "All outputs conform to strict scope bounds"
       ]
     },
     {
@@ -117,7 +115,7 @@
     {
       "axiom": "no_orphan_code",
       "status": "pending",
-      "description": "All code in outclaw-accountability-engine connects to the pipeline",
+      "description": "All code in merkaba-unified-synthesis connects to the pipeline",
       "validator": "import_check"
     },
     {
@@ -165,45 +163,39 @@
   ],
   "scope": {
     "in": [
-      "UTF-8 .txt and .md case materials",
-      "PDF documents (via extraction layer)",
-      "Docket notation (e.g. \"21-CV-12345\")",
-      "FOIA responses",
-      "Court filings and judicial complaints"
+      "Intent declarations (.ba.yaml)",
+      "Behavioral experiment specs",
+      "Creative analysis prompts"
     ],
     "out": [
-      "Evidence-consistency review packets",
-      "JSON audit sidecars with provenance",
-      "Compile manifests (compile_manifest.json)",
-      "Redacted summaries for downstream composition",
-      "Bus findings published to Syntax event bus"
+      "Signed execution contracts (.ka.yaml, .ka.json)",
+      "Integrated Ka+Ba audit reports",
+      "Synthesis verification sidecars"
     ],
     "boundaries": [
-      "Does NOT file pleadings",
-      "Does NOT provide legal advice",
-      "Does NOT store unredacted PII beyond processing scope",
-      "Does NOT execute code from uploaded documents"
+      "Does NOT require external server sockets or MCP plugins",
+      "Does NOT use catch-all skill definitions or bloated SKILL.md patterns",
+      "Does NOT defer status resolution"
     ]
   },
   "requires": [
     "python3 >= 3.10",
-    "requests (for LLM fallback)",
-    "Standard library only for core pipeline (no mandatory external deps)"
+    "Standard library for hashing and pattern verification"
   ],
   "metadata": {
     "origin": "Crostini-Chromebook",
-    "pillar": "outclaw-flagship",
+    "pillar": "merkaba-core",
     "devices": [
       "chromebook",
       "moto",
       "a9"
     ],
-    "inference": "groq-free-tier",
+    "inference": "native-python-synthesis",
     "status": "ship"
   },
   "signature": {
     "algorithm": "SHA-256",
-    "hash": "80b1391ec3005c54e6039f3c4f54b17215ec42046abf9640e70b25ee58b61506",
-    "signed_at": "2026-08-27T06:45:45.807521+00:00"
+    "hash": "dc5754ed6e62ab20feae3bd501a8f122c5fdec781a26d0fb7c0a809a0fc02068",
+    "signed_at": "2026-08-27T06:45:46.465318+00:00"
   }
 }

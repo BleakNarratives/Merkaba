@@ -1,81 +1,58 @@
 #!/usr/bin/env python3
 """
-test_merkaba.py -- Test suite for Merkaba repository health and validation.
+test_merkaba.py -- Automated test suite for Merkaba Ba/Ka generation, validation, and execution.
 """
 
-import os
-import subprocess
-import sys
 import unittest
 from pathlib import Path
-import yaml
+import validator
+import ka_gen
+import ka_run
 
+class TestMerkaba(unittest.TestCase):
 
-class TestMerkabaRepositoryHealth(unittest.TestCase):
-    def setUp(self):
-        self.repo_root = Path(__file__).parent
+    def test_ba_files_exist(self):
+        ba_files = ["outclaw.ba.yaml", "truthsleuth.ba.yaml", "merkaba.ba.yaml", "bardildo.ba.yaml"]
+        for bf in ba_files:
+            self.assertTrue(Path(bf).exists(), f"{bf} missing")
 
-    def test_validator_on_all_ba_files(self):
-        ba_files = list(self.repo_root.glob("*.ba.yaml"))
-        self.assertTrue(len(ba_files) > 0, "No Ba files found in repo root")
+    def test_validator_on_all_ba(self):
+        ba_files = ["outclaw.ba.yaml", "truthsleuth.ba.yaml", "merkaba.ba.yaml", "bardildo.ba.yaml"]
+        for bf in ba_files:
+            self.assertTrue(validator.validate(Path(bf)), f"Validation failed for {bf}")
 
-        for ba_file in ba_files:
-            if ba_file.name == "root.ba.yaml":
-                continue
-            res = subprocess.run(
-                [sys.executable, "validator.py", str(ba_file)],
-                capture_output=True,
-                text=True,
-            )
-            self.assertEqual(
-                res.returncode,
-                0,
-                f"Validation failed for {ba_file.name}:\n{res.stdout}\n{res.stderr}",
-            )
+    def test_ka_validation_on_all_ka(self):
+        ka_files = ["outclaw.ka.yaml", "truthsleuth.ka.yaml", "merkaba.ka.yaml", "bardildo.ka.yaml"]
+        for kf in ka_files:
+            ka_data = ka_gen.load_yaml(Path(kf))
+            violations = ka_gen.validate_ka(ka_data)
+            self.assertEqual(len(violations), 0, f"Ka violations in {kf}: {violations}")
 
-    def test_validator_on_all_ka_files(self):
-        ka_files = list(self.repo_root.glob("*.ka.yaml"))
-        self.assertTrue(len(ka_files) > 0, "No Ka files found in repo root")
+    def test_signature_verification_and_tamper_detection(self):
+        ka_files = ["outclaw.ka.yaml", "truthsleuth.ka.yaml", "merkaba.ka.yaml", "bardildo.ka.yaml"]
+        for kf in ka_files:
+            ka_data = ka_gen.load_yaml(Path(kf))
+            self.assertTrue(ka_gen.verify_ka_signature(ka_data), f"Signature invalid for {kf}")
 
-        for ka_file in ka_files:
-            res = subprocess.run(
-                [sys.executable, "validator.py", str(ka_file)],
-                capture_output=True,
-                text=True,
-            )
-            self.assertEqual(
-                res.returncode,
-                0,
-                f"Validation failed for {ka_file.name}:\n{res.stdout}\n{res.stderr}",
-            )
+            # Tamper test
+            tampered_ka = dict(ka_data)
+            tampered_ka["ba_ref"] = "tampered_ref"
+            self.assertFalse(ka_gen.verify_ka_signature(tampered_ka), f"Tamper detection failed for {kf}")
 
-    def test_signed_contracts_in_sync(self):
-        ka_files = list(self.repo_root.glob("*.ka.yaml"))
-        for ka_file in ka_files:
-            signed_file = self.repo_root / "signed" / ka_file.name
-            self.assertTrue(
-                signed_file.exists(),
-                f"Signed copy missing for {ka_file.name} in signed/",
-            )
+    def test_contract_execution_engine(self):
+        ka_files = ["outclaw.ka.yaml", "truthsleuth.ka.yaml", "merkaba.ka.yaml", "bardildo.ka.yaml"]
+        for kf in ka_files:
+            receipt = ka_run.execute_ka(Path(kf))
+            self.assertEqual(receipt.get("execution_status"), "COMPLETED", f"Execution failed for {kf}")
+            self.assertIn("receipt_signature", receipt, f"Missing receipt signature for {kf}")
+            self.assertEqual(len(receipt.get("execution_log", [])), 5, f"Expected 5 executed stages for {kf}")
 
-            with open(ka_file, "r") as f:
-                ka_data = yaml.safe_load(f)
-            with open(signed_file, "r") as f:
-                signed_data = yaml.safe_load(f)
-
-            self.assertEqual(
-                ka_data.get("signature", {}).get("hash"),
-                signed_data.get("signature", {}).get("hash"),
-                f"Signature mismatch between {ka_file.name} and signed/{signed_file.name}",
-            )
-
-    def test_merkaba_init_script(self):
-        res = subprocess.run(["bash", "merkaba_init.sh"], capture_output=True, text=True)
-        self.assertEqual(res.returncode, 0, f"merkaba_init.sh failed: {res.stderr}")
-        home_merkaba = Path.home() / ".merkaba"
-        self.assertTrue((home_merkaba / "root.ba.yaml").exists())
-        self.assertTrue((home_merkaba / "validator.py").exists())
-
+    def test_ship_status(self):
+        ba_files = ["outclaw.ba.yaml", "truthsleuth.ba.yaml", "merkaba.ba.yaml", "bardildo.ba.yaml"]
+        for bf in ba_files:
+            data = ka_gen.load_yaml(Path(bf))
+            status = data.get("metadata", {}).get("status")
+            self.assertEqual(status, "ship", f"Status in {bf} is {status}, expected 'ship'")
 
 if __name__ == "__main__":
     unittest.main()

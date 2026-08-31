@@ -1,14 +1,14 @@
 {
   "ka_version": "0.1.0",
-  "ba_ref": "outclaw-accountability-engine",
-  "generated_at": "2026-08-27T06:45:45.807315+00:00",
+  "ba_ref": "bardildo-ecosystem-tour-guide",
+  "generated_at": "2026-08-28T09:13:39.540921+00:00",
   "generator": "ka_gen.py (template)",
   "stages": [
     {
       "order": 1,
       "verb": "validate",
       "name": "input_validation",
-      "description": "Validate input conforms to scope.in for outclaw-accountability-engine",
+      "description": "Validate input conforms to scope.in for bardildo-ecosystem-tour-guide",
       "input": "raw_input",
       "output": "validated_input",
       "tool": "stdlib",
@@ -19,7 +19,7 @@
       "order": 2,
       "verb": "process",
       "name": "core_analysis",
-      "description": "Execute core outclaw-accountability-engine analysis pipeline",
+      "description": "Execute core bardildo-ecosystem-tour-guide analysis pipeline",
       "input": "validated_input",
       "output": "raw_results",
       "tool": "stdlib",
@@ -37,13 +37,11 @@
       "signal": "verified",
       "error": "quarantine",
       "checks": [
-        "All uploaded documents parse without error",
-        "Citation claims are cross-referenced against known case law",
-        "Procedural timeline inconsistencies are flagged",
-        "PII is redacted in all output artifacts",
-        "Review packets include JSON audit sidecars",
-        "Compile manifest is written last (publication marker)",
-        "Non-zero exit status on validation failure (no partial batches)"
+        "Responds strictly when explicitly invoked by user intent or system command",
+        "Provides clear, direct, irreverent navigation across ModMind components",
+        "Maintains strict anti-clippy posture (zero background nagging/interruptions)",
+        "All outputs conform to strict scope bounds and 8 Root Ba Axioms",
+        "Produces signed execution contracts and receipts"
       ]
     },
     {
@@ -117,7 +115,7 @@
     {
       "axiom": "no_orphan_code",
       "status": "pending",
-      "description": "All code in outclaw-accountability-engine connects to the pipeline",
+      "description": "All code in bardildo-ecosystem-tour-guide connects to the pipeline",
       "validator": "import_check"
     },
     {
@@ -165,45 +163,41 @@
   ],
   "scope": {
     "in": [
-      "UTF-8 .txt and .md case materials",
-      "PDF documents (via extraction layer)",
-      "Docket notation (e.g. \"21-CV-12345\")",
-      "FOIA responses",
-      "Court filings and judicial complaints"
+      "Explicit tour queries and navigation commands",
+      "Creative enhancement and lateral synthesis requests",
+      "System component status queries"
     ],
     "out": [
-      "Evidence-consistency review packets",
-      "JSON audit sidecars with provenance",
-      "Compile manifests (compile_manifest.json)",
-      "Redacted summaries for downstream composition",
-      "Bus findings published to Syntax event bus"
+      "Ecosystem orientation reports",
+      "Lateral insight sidecars",
+      "Navigation route guidance"
     ],
     "boundaries": [
-      "Does NOT file pleadings",
-      "Does NOT provide legal advice",
-      "Does NOT store unredacted PII beyond processing scope",
-      "Does NOT execute code from uploaded documents"
+      "Does NOT spawn unprompted popups or background interruptions (Anti-Clippy Law)",
+      "Does NOT offer unsolicited suggestions while user is typing",
+      "Does NOT run persistent idle loops nagging the user",
+      "Does NOT violate Root Ba Axioms"
     ]
   },
   "requires": [
     "python3 >= 3.10",
-    "requests (for LLM fallback)",
-    "Standard library only for core pipeline (no mandatory external deps)"
+    "Standard library for hashing and contract verification"
   ],
   "metadata": {
     "origin": "Crostini-Chromebook",
-    "pillar": "outclaw-flagship",
+    "pillar": "bardildo-creative-guide",
     "devices": [
       "chromebook",
       "moto",
       "a9"
     ],
-    "inference": "groq-free-tier",
-    "status": "ship"
+    "inference": "native-python-synthesis",
+    "status": "ship",
+    "notes": "Anti-Clippy Law enforced at contract level: Bardildo is event-driven\nand intent-triggered only. High signal, zero fluff."
   },
   "signature": {
     "algorithm": "SHA-256",
-    "hash": "80b1391ec3005c54e6039f3c4f54b17215ec42046abf9640e70b25ee58b61506",
-    "signed_at": "2026-08-27T06:45:45.807521+00:00"
+    "hash": "0b41d606b20709a5038fc1bc13b888ad5fb13241090853629c52d002955b6971",
+    "signed_at": "2026-08-28T09:13:39.541365+00:00"
   }
 }

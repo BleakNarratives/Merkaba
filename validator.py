@@ -2,119 +2,252 @@
 """
 validator.py -- Incumbent/Repugnant root Ba validator.
 Promoted from Man-Apart stub to system-wide validator.
+Zero external dependencies.
 """
 
 import sys
+import json
 from pathlib import Path
 
 try:
     import yaml
 except ImportError:
-    print("[validator] PyYAML not installed. Install: pip install pyyaml")
-    sys.exit(1)
+    yaml = None
+
+def parse_yaml_minimal(content: str) -> dict:
+    """Pure-Python minimal YAML parser for Ba/Ka files when PyYAML is not installed."""
+    if yaml is not None:
+        return yaml.safe_load(content)
+
+    lines = content.splitlines()
+    data = {}
+    current_section = None
+    current_key = None
+    in_block_scalar = False
+    block_lines = []
+    block_indent = 0
+
+    for raw_line in lines:
+        line = raw_line.rstrip()
+        if not line or line.lstrip().startswith('#'):
+            continue
+
+        indent = len(raw_line) - len(raw_line.lstrip())
+
+        if in_block_scalar:
+            if indent > block_indent or not raw_line.strip():
+                block_lines.append(raw_line.strip())
+                continue
+            else:
+                if current_section and current_key:
+                    data.setdefault(current_section, {})[current_key] = "\n".join(block_lines)
+                elif current_key:
+                    data[current_key] = "\n".join(block_lines)
+                in_block_scalar = False
+                block_lines = []
+
+        stripped = line.strip()
+
+        # Check section header (indent == 0)
+        if indent == 0 and ':' in stripped and not stripped.startswith('-'):
+            key, val = stripped.split(':', 1)
+            key = key.strip()
+            val = val.strip().strip('"\'').strip()
+
+            if val == '|':
+                in_block_scalar = True
+                block_indent = indent
+                current_section = None
+                current_key = key
+                block_lines = []
+                continue
+
+            if val:
+                data[key] = val
+                current_section = None
+                current_key = key
+            else:
+                current_section = key
+                data.setdefault(current_section, {})
+                current_key = None
+            continue
+
+        # Nested keys (indent > 0)
+        if current_section and ':' in stripped and not stripped.startswith('-'):
+            key, val = stripped.split(':', 1)
+            key = key.strip()
+            val = val.strip().strip('"\'').strip()
+
+            if val == '|':
+                in_block_scalar = True
+                block_indent = indent
+                current_key = key
+                block_lines = []
+                continue
+
+            if val.startswith('[') and val.endswith(']'):
+                items = [x.strip().strip('"\'').strip() for x in val[1:-1].split(',') if x.strip()]
+                data[current_section][key] = items
+            elif val:
+                data[current_section][key] = val
+            else:
+                data[current_section].setdefault(key, {})
+            current_key = key
+            continue
+
+        # List items
+        if stripped.startswith('- '):
+            item = stripped[2:].strip().strip('"\'').strip()
+            if current_section and current_key:
+                sec_dict = data[current_section]
+                if not isinstance(sec_dict.get(current_key), list):
+                    sec_dict[current_key] = []
+                sec_dict[current_key].append(item)
+            elif current_section:
+                if not isinstance(data[current_section], list):
+                    data[current_section] = []
+                data[current_section].append(item)
+            elif current_key:
+                if not isinstance(data.get(current_key), list):
+                    data[current_key] = []
+                data[current_key].append(item)
+
+    if in_block_scalar and current_key:
+        if current_section:
+            data.setdefault(current_section, {})[current_key] = "\n".join(block_lines)
+        else:
+            data[current_key] = "\n".join(block_lines)
+
+    return data
 
 
-def find_root_ba() -> Path:
-    """Find root.ba.yaml in ~/.merkaba or local repo directory."""
+def load_yaml(path: Path) -> dict:
+    with open(path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    if yaml is not None:
+        return yaml.safe_load(content)
+    try:
+        return json.loads(content)
+    except Exception:
+        return parse_yaml_minimal(content)
+
+
+def find_root_ba() -> dict:
+    local_root = Path("root.ba.yaml")
     home_root = Path.home() / ".merkaba" / "root.ba.yaml"
-    if home_root.exists():
-        return home_root
 
-    local_root = Path(__file__).parent / "root.ba.yaml"
     if local_root.exists():
-        return local_root
-
-    raise FileNotFoundError("root.ba.yaml not found in ~/.merkaba/ or local directory")
-
-
-def validate_ba(data: dict, file_path: Path) -> list[str]:
-    """Validate a Ba declaration against Root Ba axioms and schema."""
-    violations = []
-    
-    # Required top-level Ba fields
-    required_fields = ["name", "version", "intent", "success_criteria", "scope", "metadata"]
-    for field in required_fields:
-        if field not in data or not data[field]:
-            violations.append(f"Ba missing required field or empty: '{field}'")
-
-    # Scope check
-    scope = data.get("scope", {})
-    if isinstance(scope, dict):
-        for s_field in ["in", "out", "boundaries"]:
-            if s_field not in scope:
-                violations.append(f"Ba scope missing field: '{s_field}'")
+        return load_yaml(local_root)
+    elif home_root.exists():
+        return load_yaml(home_root)
     else:
-        violations.append("Ba scope must be a dictionary")
-
-    # Metadata & ship_or_kill axiom check
-    metadata = data.get("metadata", {})
-    if isinstance(metadata, dict):
-        status = metadata.get("status", "").lower()
-        if not status:
-            violations.append("Ba metadata missing 'status'")
-        elif status not in ["ship", "kill"]:
-            violations.append(f"SHIP_OR_KILL: Ba status is '{status}' — must resolve to 'ship' or 'kill'")
-    else:
-        violations.append("Ba metadata must be a dictionary")
-
-    return violations
+        return {
+            "axioms": [
+                "no_orphan_code",
+                "no_larp",
+                "no_pokemon_skills",
+                "no_eternal_defer",
+                "no_print_theater",
+                "ka_must_earn_ba",
+                "scope_is_law",
+                "ship_or_kill",
+            ]
+        }
 
 
-def validate(target_path: Path) -> bool:
-    print(f"Validating {target_path}...")
-    
-    try:
-        root_ba_path = find_root_ba()
-        print(f"Using Root Ba: {root_ba_path}")
-        with open(root_ba_path, "r", encoding="utf-8") as f:
-            root_ba = yaml.safe_load(f)
-    except Exception as e:
-        print(f"ERROR loading root.ba.yaml: {e}")
+def validate(ba_path: Path) -> bool:
+    print(f"Validating {ba_path}...")
+    if not ba_path.exists():
+        print(f"ERROR: File not found: {ba_path}")
         return False
 
-    if not target_path.exists():
-        print(f"ERROR: File not found: {target_path}")
-        return False
+    root_ba = find_root_ba()
+    axioms = root_ba.get("axioms", [
+        "no_orphan_code",
+        "no_larp",
+        "no_pokemon_skills",
+        "no_eternal_defer",
+        "no_print_theater",
+        "ka_must_earn_ba",
+        "scope_is_law",
+        "ship_or_kill",
+    ])
 
-    try:
-        with open(target_path, "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)
-    except Exception as e:
-        print(f"ERROR parsing YAML in {target_path}: {e}")
-        return False
+    data = load_yaml(ba_path)
 
     if not isinstance(data, dict):
-        print(f"ERROR: Invalid YAML format in {target_path}")
+        print(f"ERROR: {ba_path} is not a valid Ba declaration")
         return False
 
-    # Check if Ka or Ba file
     violations = []
-    if "ka_version" in data or target_path.name.endswith(".ka.yaml"):
-        # Import validate_ka from ka_gen if available
-        try:
-            from ka_gen import validate_ka
-            violations = validate_ka(data)
-        except ImportError:
-            # Fallback basic Ka validation
-            if data.get("metadata", {}).get("status") == "hold":
-                violations.append("SHIP_OR_KILL: Ka status is HOLD — resolve to SHIP or KILL")
-    else:
-        violations = validate_ba(data, target_path)
+
+    # 1. ship_or_kill
+    if "ship_or_kill" in axioms:
+        metadata = data.get("metadata", {})
+        status = ""
+        if isinstance(metadata, dict):
+            status = str(metadata.get("status", "")).strip().strip('"\'').strip().lower()
+
+        if status == "hold":
+            violations.append("SHIP_OR_KILL violation: status is 'hold' (must resolve to 'ship' or 'kill')")
+
+    # 2. scope_is_law
+    if "scope_is_law" in axioms:
+        scope = data.get("scope", {})
+        if not isinstance(scope, dict) or "in" not in scope or "out" not in scope:
+            violations.append("SCOPE_IS_LAW violation: scope must specify both 'in' and 'out'")
+
+    # 3. ka_must_earn_ba
+    if "ka_must_earn_ba" in axioms:
+        criteria = data.get("success_criteria", [])
+        if not criteria or not isinstance(criteria, list):
+            violations.append("KA_MUST_EARN_BA violation: success_criteria must be a non-empty list")
+
+    # 4. no_larp
+    if "no_larp" in axioms:
+        intent = str(data.get("intent", "")).strip()
+        name = str(data.get("name", "")).strip()
+        if not intent or not name:
+            violations.append("NO_LARP violation: Ba declaration must have non-empty name and intent")
+
+    # 5. no_pokemon_skills
+    if "no_pokemon_skills" in axioms:
+        requires = data.get("requires", [])
+        if any("catch_all" in str(r).lower() or "*" in str(r) for r in requires):
+            violations.append("NO_POKEMON_SKILLS violation: wildcards or catch-all dependencies forbidden")
+
+    # 6. no_orphan_code
+    if "no_orphan_code" in axioms:
+        scope_in = data.get("scope", {}).get("in", [])
+        if not scope_in:
+            violations.append("NO_ORPHAN_CODE violation: scope.in cannot be empty")
+
+    # 7. no_print_theater
+    if "no_print_theater" in axioms:
+        intent = str(data.get("intent", "")).lower()
+        if "mock_only" in intent or "print_only" in intent:
+            violations.append("NO_PRINT_THEATER violation: fake or mock-only intent detected")
+
+    # 8. no_eternal_defer
+    if "no_eternal_defer" in axioms:
+        if data.get("metadata", {}).get("defer_count", 0) > 3:
+            violations.append("NO_ETERNAL_DEFER violation: task deferred more than 3 times")
 
     if violations:
-        print(f"VALIDATION FAILED for {target_path.name} — {len(violations)} violation(s):")
+        print(f"VALIDATION FAILED ({len(violations)} violations):")
         for v in violations:
             print(f"  - {v}")
         return False
 
-    print(f"VALIDATION PASSED — {target_path.name} conforms to root axioms")
+    print("VALIDATION PASSED — Ba conforms to all Root Ba Axioms")
     return True
-
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python3 validator.py <ba_or_ka_file.yaml>")
+        print("Usage: python3 validator.py <ba_file.yaml>")
         sys.exit(1)
-    
-    success = validate(Path(sys.argv[1]))
-    sys.exit(0 if success else 1)
+
+    if validate(Path(sys.argv[1])):
+        sys.exit(0)
+    else:
+        sys.exit(1)

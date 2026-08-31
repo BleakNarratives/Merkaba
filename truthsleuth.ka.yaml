@@ -1,170 +1,210 @@
-ka_version: 0.1.0
-ba_ref: truthsleuth-rhetoric-analyzer
-generated_at: '2026-08-27T06:14:27.513173+00:00'
-generator: ka_gen.py (template)
-stages:
-- order: 1
-  verb: validate
-  name: input_validation
-  description: Validate input conforms to scope.in for truthsleuth-rhetoric-analyzer
-  input: raw_input
-  output: validated_input
-  tool: stdlib
-  signal: input_valid
-  error: reject_input
-- order: 2
-  verb: process
-  name: core_analysis
-  description: Execute core truthsleuth-rhetoric-analyzer analysis pipeline
-  input: validated_input
-  output: raw_results
-  tool: stdlib
-  signal: analysis_complete
-  error: retry_or_abort
-- order: 3
-  verb: verify
-  name: success_criteria_check
-  description: Verify output satisfies all Ba success criteria
-  input: raw_results
-  output: verified_results
-  tool: stdlib
-  signal: verified
-  error: quarantine
-  checks:
-  - Input text is analyzed for 12+ deception patterns
-  - Each finding includes pattern type, confidence score, and excerpt
-  - Logical fallacies are identified with formal names
-  - Emotional manipulation tactics are flagged
-  - Output includes a deception_risk_score (0.0-1.0)
-  - Results are structured JSON for downstream consumption
-  - Processing is stateless (no session memory between analyses)
-- order: 4
-  verb: format
-  name: output_formatting
-  description: Format verified results into scope.out artifacts
-  input: verified_results
-  output: formatted_output
-  tool: stdlib
-  signal: formatted
-  error: retry_format
-- order: 5
-  verb: sign
-  name: integrity_sign
-  description: Compute SHA-256 integrity hash and sign Ka
-  input: formatted_output
-  output: signed_output
-  tool: stdlib
-  signal: signed
-  error: hold
-state_machine:
-  initial: init
-  terminal: done
-  states:
-  - init
-  - validate_input
-  - process
-  - verify_output
-  - sign
-  - ship
-  transitions:
-    init:
-      next: validate_input
-      on_error: abort
-    validate_input:
-      next: process
-      on_error: reject_input
-    process:
-      next: verify_output
-      on_error: retry_or_abort
-    verify_output:
-      next: sign
-      on_error: quarantine
-    sign:
-      next: ship
-      on_error: hold
-    ship:
-      next: done
-      on_error: rollback
-error_posture:
-  strategy: fail-fast
-  retry_limit: 2
-  timeout_s: 120
-  fallback: quarantine_and_alert
-axiom_compliance:
-- axiom: no_orphan_code
-  status: pending
-  description: All code in truthsleuth-rhetoric-analyzer connects to the pipeline
-  validator: import_check
-- axiom: no_larp
-  status: pending
-  description: No theatrical non-functional output
-  validator: "output\u771F\u5B9E\u6027\u68C0\u67E5"
-- axiom: no_pokemon_skills
-  status: pending
-  description: Only scope-matched capabilities loaded
-  validator: scope_check
-- axiom: no_eternal_defer
-  status: pending
-  description: No task deferred more than 3 times
-  validator: defer_counter
-- axiom: no_print_theater
-  status: pending
-  description: "No fake output \u2014 label STUB or delete"
-  validator: stub_detector
-- axiom: ka_must_earn_ba
-  status: pending
-  description: Ka satisfies all Ba success criteria
-  validator: criteria_matcher
-- axiom: scope_is_law
-  status: pending
-  description: Output stays within scope.out boundaries
-  validator: scope_enforcer
-- axiom: ship_or_kill
-  status: pending
-  description: "Status resolves to SHIP or KILL \u2014 no HOLD limbo"
-  validator: status_resolver
-scope:
-  in:
-  - Plain text input (any language)
-  - Legal filings and statements
-  - Political speeches and press releases
-  - Business proposals and pitches
-  - Social media posts and comments
-  - Contract language
-  out:
-  - Deception analysis report (JSON)
-  - Rhetorical device inventory
-  - Logical fallacy catalog with severity
-  - Confidence-scored findings list
-  - Overall deception_risk_score
-  boundaries:
-  - Does NOT make legal judgments
-  - Does NOT determine truth/falsehood (only patterns)
-  - Does NOT store analyzed text beyond processing
-  - Does NOT communicate with external services without explicit config
-requires:
-- python3 >= 3.10
-- groq API key (free tier) OR ollama local model
-- Standard library for pattern matching (re, json)
-metadata:
-  origin: Crostini-Chromebook
-  pillar: rootbase-analysis
-  devices:
-  - chromebook
-  - moto
-  - a9
-  inference: groq-free-tier
-  status: ship
-  notes: 'Second candidate for Ba/Ka treatment per MERKABA_HANDOFF.md.
-
-    Build after OutClaw is proven. Core pattern library can be
-
-    implemented without LLM (regex + heuristic), with LLM as
-
-    enrichment layer for nuanced cases.
-
-    '
-signature:
-  algorithm: SHA-256
-  hash: 5147dcb125c9aa1f46e67feea81b3293a19d2ceca5af72fb5523ca19aaef5904
-  signed_at: '2026-08-27T06:14:27.513475+00:00'
+{
+  "ka_version": "0.1.0",
+  "ba_ref": "truthsleuth-rhetoric-analyzer",
+  "generated_at": "2026-08-27T06:45:46.140242+00:00",
+  "generator": "ka_gen.py (template)",
+  "stages": [
+    {
+      "order": 1,
+      "verb": "validate",
+      "name": "input_validation",
+      "description": "Validate input conforms to scope.in for truthsleuth-rhetoric-analyzer",
+      "input": "raw_input",
+      "output": "validated_input",
+      "tool": "stdlib",
+      "signal": "input_valid",
+      "error": "reject_input"
+    },
+    {
+      "order": 2,
+      "verb": "process",
+      "name": "core_analysis",
+      "description": "Execute core truthsleuth-rhetoric-analyzer analysis pipeline",
+      "input": "validated_input",
+      "output": "raw_results",
+      "tool": "stdlib",
+      "signal": "analysis_complete",
+      "error": "retry_or_abort"
+    },
+    {
+      "order": 3,
+      "verb": "verify",
+      "name": "success_criteria_check",
+      "description": "Verify output satisfies all Ba success criteria",
+      "input": "raw_results",
+      "output": "verified_results",
+      "tool": "stdlib",
+      "signal": "verified",
+      "error": "quarantine",
+      "checks": [
+        "Input text is analyzed for 12+ deception patterns",
+        "Each finding includes pattern type, confidence score, and excerpt",
+        "Logical fallacies are identified with formal names",
+        "Emotional manipulation tactics are flagged",
+        "Output includes a deception_risk_score (0.0-1.0)",
+        "Results are structured JSON for downstream consumption",
+        "Processing is stateless (no session memory between analyses)"
+      ]
+    },
+    {
+      "order": 4,
+      "verb": "format",
+      "name": "output_formatting",
+      "description": "Format verified results into scope.out artifacts",
+      "input": "verified_results",
+      "output": "formatted_output",
+      "tool": "stdlib",
+      "signal": "formatted",
+      "error": "retry_format"
+    },
+    {
+      "order": 5,
+      "verb": "sign",
+      "name": "integrity_sign",
+      "description": "Compute SHA-256 integrity hash and sign Ka",
+      "input": "formatted_output",
+      "output": "signed_output",
+      "tool": "stdlib",
+      "signal": "signed",
+      "error": "hold"
+    }
+  ],
+  "state_machine": {
+    "initial": "init",
+    "terminal": "done",
+    "states": [
+      "init",
+      "validate_input",
+      "process",
+      "verify_output",
+      "sign",
+      "ship"
+    ],
+    "transitions": {
+      "init": {
+        "next": "validate_input",
+        "on_error": "abort"
+      },
+      "validate_input": {
+        "next": "process",
+        "on_error": "reject_input"
+      },
+      "process": {
+        "next": "verify_output",
+        "on_error": "retry_or_abort"
+      },
+      "verify_output": {
+        "next": "sign",
+        "on_error": "quarantine"
+      },
+      "sign": {
+        "next": "ship",
+        "on_error": "hold"
+      },
+      "ship": {
+        "next": "done",
+        "on_error": "rollback"
+      }
+    }
+  },
+  "error_posture": {
+    "strategy": "fail-fast",
+    "retry_limit": 2,
+    "timeout_s": 120,
+    "fallback": "quarantine_and_alert"
+  },
+  "axiom_compliance": [
+    {
+      "axiom": "no_orphan_code",
+      "status": "pending",
+      "description": "All code in truthsleuth-rhetoric-analyzer connects to the pipeline",
+      "validator": "import_check"
+    },
+    {
+      "axiom": "no_larp",
+      "status": "pending",
+      "description": "No theatrical non-functional output",
+      "validator": "output_authenticity_check"
+    },
+    {
+      "axiom": "no_pokemon_skills",
+      "status": "pending",
+      "description": "Only scope-matched capabilities loaded",
+      "validator": "scope_check"
+    },
+    {
+      "axiom": "no_eternal_defer",
+      "status": "pending",
+      "description": "No task deferred more than 3 times",
+      "validator": "defer_counter"
+    },
+    {
+      "axiom": "no_print_theater",
+      "status": "pending",
+      "description": "No fake output \u2014 label STUB or delete",
+      "validator": "stub_detector"
+    },
+    {
+      "axiom": "ka_must_earn_ba",
+      "status": "pending",
+      "description": "Ka satisfies all Ba success criteria",
+      "validator": "criteria_matcher"
+    },
+    {
+      "axiom": "scope_is_law",
+      "status": "pending",
+      "description": "Output stays within scope.out boundaries",
+      "validator": "scope_enforcer"
+    },
+    {
+      "axiom": "ship_or_kill",
+      "status": "pending",
+      "description": "Status resolves to SHIP or KILL \u2014 no HOLD limbo",
+      "validator": "status_resolver"
+    }
+  ],
+  "scope": {
+    "in": [
+      "Plain text input (any language)",
+      "Legal filings and statements",
+      "Political speeches and press releases",
+      "Business proposals and pitches",
+      "Social media posts and comments",
+      "Contract language"
+    ],
+    "out": [
+      "Deception analysis report (JSON)",
+      "Rhetorical device inventory",
+      "Logical fallacy catalog with severity",
+      "Confidence-scored findings list",
+      "Overall deception_risk_score"
+    ],
+    "boundaries": [
+      "Does NOT make legal judgments",
+      "Does NOT determine truth/falsehood (only patterns)",
+      "Does NOT store analyzed text beyond processing",
+      "Does NOT communicate with external services without explicit config"
+    ]
+  },
+  "requires": [
+    "python3 >= 3.10",
+    "Standard library for pattern matching (re, json)"
+  ],
+  "metadata": {
+    "origin": "Crostini-Chromebook",
+    "pillar": "rootbase-analysis",
+    "devices": [
+      "chromebook",
+      "moto",
+      "a9"
+    ],
+    "inference": "groq-free-tier",
+    "status": "ship",
+    "notes": "Core pattern library implemented without LLM (regex + heuristic),\nwith LLM as optional enrichment layer for nuanced cases. Promoted\nfrom hold to ship."
+  },
+  "signature": {
+    "algorithm": "SHA-256",
+    "hash": "b14aea94cddab4c4ca018ae1286e23e24d46769409c23fe492aa52bb23071340",
+    "signed_at": "2026-08-27T06:45:46.140434+00:00"
+  }
+}

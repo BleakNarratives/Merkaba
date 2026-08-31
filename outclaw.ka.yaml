@@ -1,160 +1,209 @@
-ka_version: 0.1.0
-ba_ref: outclaw-accountability-engine
-generated_at: '2026-08-27T06:14:27.165075+00:00'
-generator: ka_gen.py (template)
-stages:
-- order: 1
-  verb: validate
-  name: input_validation
-  description: Validate input conforms to scope.in for outclaw-accountability-engine
-  input: raw_input
-  output: validated_input
-  tool: stdlib
-  signal: input_valid
-  error: reject_input
-- order: 2
-  verb: process
-  name: core_analysis
-  description: Execute core outclaw-accountability-engine analysis pipeline
-  input: validated_input
-  output: raw_results
-  tool: stdlib
-  signal: analysis_complete
-  error: retry_or_abort
-- order: 3
-  verb: verify
-  name: success_criteria_check
-  description: Verify output satisfies all Ba success criteria
-  input: raw_results
-  output: verified_results
-  tool: stdlib
-  signal: verified
-  error: quarantine
-  checks:
-  - All uploaded documents parse without error
-  - Citation claims are cross-referenced against known case law
-  - Procedural timeline inconsistencies are flagged
-  - PII is redacted in all output artifacts
-  - Review packets include JSON audit sidecars
-  - Compile manifest is written last (publication marker)
-  - Non-zero exit status on validation failure (no partial batches)
-- order: 4
-  verb: format
-  name: output_formatting
-  description: Format verified results into scope.out artifacts
-  input: verified_results
-  output: formatted_output
-  tool: stdlib
-  signal: formatted
-  error: retry_format
-- order: 5
-  verb: sign
-  name: integrity_sign
-  description: Compute SHA-256 integrity hash and sign Ka
-  input: formatted_output
-  output: signed_output
-  tool: stdlib
-  signal: signed
-  error: hold
-state_machine:
-  initial: init
-  terminal: done
-  states:
-  - init
-  - validate_input
-  - process
-  - verify_output
-  - sign
-  - ship
-  transitions:
-    init:
-      next: validate_input
-      on_error: abort
-    validate_input:
-      next: process
-      on_error: reject_input
-    process:
-      next: verify_output
-      on_error: retry_or_abort
-    verify_output:
-      next: sign
-      on_error: quarantine
-    sign:
-      next: ship
-      on_error: hold
-    ship:
-      next: done
-      on_error: rollback
-error_posture:
-  strategy: fail-fast
-  retry_limit: 2
-  timeout_s: 120
-  fallback: quarantine_and_alert
-axiom_compliance:
-- axiom: no_orphan_code
-  status: pending
-  description: All code in outclaw-accountability-engine connects to the pipeline
-  validator: import_check
-- axiom: no_larp
-  status: pending
-  description: No theatrical non-functional output
-  validator: "output\u771F\u5B9E\u6027\u68C0\u67E5"
-- axiom: no_pokemon_skills
-  status: pending
-  description: Only scope-matched capabilities loaded
-  validator: scope_check
-- axiom: no_eternal_defer
-  status: pending
-  description: No task deferred more than 3 times
-  validator: defer_counter
-- axiom: no_print_theater
-  status: pending
-  description: "No fake output \u2014 label STUB or delete"
-  validator: stub_detector
-- axiom: ka_must_earn_ba
-  status: pending
-  description: Ka satisfies all Ba success criteria
-  validator: criteria_matcher
-- axiom: scope_is_law
-  status: pending
-  description: Output stays within scope.out boundaries
-  validator: scope_enforcer
-- axiom: ship_or_kill
-  status: pending
-  description: "Status resolves to SHIP or KILL \u2014 no HOLD limbo"
-  validator: status_resolver
-scope:
-  in:
-  - UTF-8 .txt and .md case materials
-  - PDF documents (via extraction layer)
-  - Docket notation (e.g. "21-CV-12345")
-  - FOIA responses
-  - Court filings and judicial complaints
-  out:
-  - Evidence-consistency review packets
-  - JSON audit sidecars with provenance
-  - Compile manifests (compile_manifest.json)
-  - Redacted summaries for downstream composition
-  - Bus findings published to Syntax event bus
-  boundaries:
-  - Does NOT file pleadings
-  - Does NOT provide legal advice
-  - Does NOT store unredacted PII beyond processing scope
-  - Does NOT execute code from uploaded documents
-requires:
-- python3 >= 3.10
-- requests (for LLM fallback)
-- Standard library only for core pipeline (no mandatory external deps)
-metadata:
-  origin: Crostini-Chromebook
-  pillar: outclaw-flagship
-  devices:
-  - chromebook
-  - moto
-  - a9
-  inference: groq-free-tier
-  status: ship
-signature:
-  algorithm: SHA-256
-  hash: 72503f1c55ffe04c6482274955a7babfe8cabc22837a78fca24b9a0be511648d
-  signed_at: '2026-08-27T06:14:27.165279+00:00'
+{
+  "ka_version": "0.1.0",
+  "ba_ref": "outclaw-accountability-engine",
+  "generated_at": "2026-08-27T06:45:45.807315+00:00",
+  "generator": "ka_gen.py (template)",
+  "stages": [
+    {
+      "order": 1,
+      "verb": "validate",
+      "name": "input_validation",
+      "description": "Validate input conforms to scope.in for outclaw-accountability-engine",
+      "input": "raw_input",
+      "output": "validated_input",
+      "tool": "stdlib",
+      "signal": "input_valid",
+      "error": "reject_input"
+    },
+    {
+      "order": 2,
+      "verb": "process",
+      "name": "core_analysis",
+      "description": "Execute core outclaw-accountability-engine analysis pipeline",
+      "input": "validated_input",
+      "output": "raw_results",
+      "tool": "stdlib",
+      "signal": "analysis_complete",
+      "error": "retry_or_abort"
+    },
+    {
+      "order": 3,
+      "verb": "verify",
+      "name": "success_criteria_check",
+      "description": "Verify output satisfies all Ba success criteria",
+      "input": "raw_results",
+      "output": "verified_results",
+      "tool": "stdlib",
+      "signal": "verified",
+      "error": "quarantine",
+      "checks": [
+        "All uploaded documents parse without error",
+        "Citation claims are cross-referenced against known case law",
+        "Procedural timeline inconsistencies are flagged",
+        "PII is redacted in all output artifacts",
+        "Review packets include JSON audit sidecars",
+        "Compile manifest is written last (publication marker)",
+        "Non-zero exit status on validation failure (no partial batches)"
+      ]
+    },
+    {
+      "order": 4,
+      "verb": "format",
+      "name": "output_formatting",
+      "description": "Format verified results into scope.out artifacts",
+      "input": "verified_results",
+      "output": "formatted_output",
+      "tool": "stdlib",
+      "signal": "formatted",
+      "error": "retry_format"
+    },
+    {
+      "order": 5,
+      "verb": "sign",
+      "name": "integrity_sign",
+      "description": "Compute SHA-256 integrity hash and sign Ka",
+      "input": "formatted_output",
+      "output": "signed_output",
+      "tool": "stdlib",
+      "signal": "signed",
+      "error": "hold"
+    }
+  ],
+  "state_machine": {
+    "initial": "init",
+    "terminal": "done",
+    "states": [
+      "init",
+      "validate_input",
+      "process",
+      "verify_output",
+      "sign",
+      "ship"
+    ],
+    "transitions": {
+      "init": {
+        "next": "validate_input",
+        "on_error": "abort"
+      },
+      "validate_input": {
+        "next": "process",
+        "on_error": "reject_input"
+      },
+      "process": {
+        "next": "verify_output",
+        "on_error": "retry_or_abort"
+      },
+      "verify_output": {
+        "next": "sign",
+        "on_error": "quarantine"
+      },
+      "sign": {
+        "next": "ship",
+        "on_error": "hold"
+      },
+      "ship": {
+        "next": "done",
+        "on_error": "rollback"
+      }
+    }
+  },
+  "error_posture": {
+    "strategy": "fail-fast",
+    "retry_limit": 2,
+    "timeout_s": 120,
+    "fallback": "quarantine_and_alert"
+  },
+  "axiom_compliance": [
+    {
+      "axiom": "no_orphan_code",
+      "status": "pending",
+      "description": "All code in outclaw-accountability-engine connects to the pipeline",
+      "validator": "import_check"
+    },
+    {
+      "axiom": "no_larp",
+      "status": "pending",
+      "description": "No theatrical non-functional output",
+      "validator": "output_authenticity_check"
+    },
+    {
+      "axiom": "no_pokemon_skills",
+      "status": "pending",
+      "description": "Only scope-matched capabilities loaded",
+      "validator": "scope_check"
+    },
+    {
+      "axiom": "no_eternal_defer",
+      "status": "pending",
+      "description": "No task deferred more than 3 times",
+      "validator": "defer_counter"
+    },
+    {
+      "axiom": "no_print_theater",
+      "status": "pending",
+      "description": "No fake output \u2014 label STUB or delete",
+      "validator": "stub_detector"
+    },
+    {
+      "axiom": "ka_must_earn_ba",
+      "status": "pending",
+      "description": "Ka satisfies all Ba success criteria",
+      "validator": "criteria_matcher"
+    },
+    {
+      "axiom": "scope_is_law",
+      "status": "pending",
+      "description": "Output stays within scope.out boundaries",
+      "validator": "scope_enforcer"
+    },
+    {
+      "axiom": "ship_or_kill",
+      "status": "pending",
+      "description": "Status resolves to SHIP or KILL \u2014 no HOLD limbo",
+      "validator": "status_resolver"
+    }
+  ],
+  "scope": {
+    "in": [
+      "UTF-8 .txt and .md case materials",
+      "PDF documents (via extraction layer)",
+      "Docket notation (e.g. \"21-CV-12345\")",
+      "FOIA responses",
+      "Court filings and judicial complaints"
+    ],
+    "out": [
+      "Evidence-consistency review packets",
+      "JSON audit sidecars with provenance",
+      "Compile manifests (compile_manifest.json)",
+      "Redacted summaries for downstream composition",
+      "Bus findings published to Syntax event bus"
+    ],
+    "boundaries": [
+      "Does NOT file pleadings",
+      "Does NOT provide legal advice",
+      "Does NOT store unredacted PII beyond processing scope",
+      "Does NOT execute code from uploaded documents"
+    ]
+  },
+  "requires": [
+    "python3 >= 3.10",
+    "requests (for LLM fallback)",
+    "Standard library only for core pipeline (no mandatory external deps)"
+  ],
+  "metadata": {
+    "origin": "Crostini-Chromebook",
+    "pillar": "outclaw-flagship",
+    "devices": [
+      "chromebook",
+      "moto",
+      "a9"
+    ],
+    "inference": "groq-free-tier",
+    "status": "ship"
+  },
+  "signature": {
+    "algorithm": "SHA-256",
+    "hash": "80b1391ec3005c54e6039f3c4f54b17215ec42046abf9640e70b25ee58b61506",
+    "signed_at": "2026-08-27T06:45:45.807521+00:00"
+  }
+}
